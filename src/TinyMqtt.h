@@ -187,7 +187,7 @@ class MqttClient
   };
   public:
 
-    using CallBack = void (*)(const MqttClient* source, const Topic& topic, const char* payload, size_t payload_length);
+    using CallBack = void (*)(const MqttClient* source, const Topic& topic, const char* payload, size_t payload_length, void* userData);
 
     /** Constructor. Broker is the adress of a local broker if not null
         If you want to connect elsewhere, leave broker null and use connect() **/
@@ -226,6 +226,7 @@ class MqttClient
         if (callback) callback(this, "test/topic", "value", 5);
       #endif
     };
+    void setUserData(void* data) { userData = data; }
 
     // Publish from client to the world
     MqttError publish(const Topic&, const char* payload, size_t pay_length);
@@ -313,6 +314,7 @@ class MqttClient
     std::set<Topic>  subscriptions;
     string clientId;
     CallBack callback = nullptr;
+    void* userData = nullptr;
 };
 
 class MqttBroker
