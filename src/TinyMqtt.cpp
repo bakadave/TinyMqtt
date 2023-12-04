@@ -125,10 +125,25 @@ void MqttClient::connect(MqttBroker* local)
   local_broker->addClient(this);
 }
 
-void MqttClient::connect(string broker, uint16_t port, uint16_t ka)
+void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* user, const char* passw)
 {
   debug("MqttClient::connect_to_host " << broker << ':' << port);
   keep_alive = ka;
+
+  if(user != NULL && passw != NULL) {
+    size_t user_len = strlen(user);
+    username = new char[user_len];
+    memcpy(username, user, user_len);
+
+    size_t passw_len = strlen(passw);
+    password = new char[passw_len];
+    memcpy(password, passw, passw_len);
+  }
+  else {
+    delete [] username;
+    delete [] password;
+  }
+
   close();
   if (tcp_client) delete tcp_client;
   tcp_client = new TcpClient;
@@ -379,11 +394,20 @@ void MqttClient::onConnect(void *mqttclient_ptr, TcpClient*)
   MqttMessage msg(MqttMessage::Type::Connect);
   msg.add("MQTT",4);
   msg.add(0x4);  // Mqtt protocol version 3.1.1
-  msg.add(0x0);  // Connect flags         TODO user / name
+
+  uint8_t connect_flag = 0x00;
+  connect_flag = (connect_flag | FlagCleanSession) /*| (connect_flag | FlagUserName)*/;
+  if(mqtt->username != nullptr)
+    connect_flag = (connect_flag | FlagUserName) | (connect_flag | FlagPassword);
+  msg.add(connect_flag);  // Connect flags         TODO user / name
 
   msg.add((char)(mqtt->keep_alive >> 8));   // keep_alive
   msg.add((char)(mqtt->keep_alive & 0xFF));
   msg.add(mqtt->clientId);
+  if(mqtt->username != nullptr) {
+    msg.add(mqtt->username, strlen(mqtt->username));
+    msg.add(mqtt->password, strlen(mqtt->password));
+  }
   debug("cnx: mqtt connecting");
   msg.sendTo(mqtt);
   msg.reset();
