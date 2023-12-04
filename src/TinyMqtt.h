@@ -268,6 +268,7 @@ class MqttClient
     MqttError subscribe(Topic topic, uint8_t qos=0);
     MqttError unsubscribe(Topic topic);
     bool isSubscribedTo(const Topic& topic) const;
+    inline void clearSubscriptions() {subscriptions.clear();}
 
     // connected to local broker
     // TODO seems to be useless
