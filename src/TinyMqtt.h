@@ -250,7 +250,7 @@ class MqttClient
       callback=fun;
       #if TINY_MQTT_DEBUG
         Console << TinyConsole::magenta << "Callback set to " << (long)fun << TinyConsole::white << endl;
-        if (callback) callback(this, "test/topic", "value", 5);
+        if (callback) callback(this, "test/topic", "value", 5, userData);
       #endif
     };
     void setUserData(void* data)
@@ -349,6 +349,8 @@ class MqttClient
     void *userData = nullptr;
     char *username = nullptr;
     char *password = nullptr;
+    size_t user_len = 0;
+    size_t passw_len = 0;
 };
 
 class MqttBroker

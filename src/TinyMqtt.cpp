@@ -131,11 +131,11 @@ void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* 
   keep_alive = ka;
 
   if(user != NULL && passw != NULL) {
-    size_t user_len = strlen(user);
+    user_len = strlen(user);
     username = new char[user_len];
     memcpy(username, user, user_len);
 
-    size_t passw_len = strlen(passw);
+    passw_len = strlen(passw);
     password = new char[passw_len];
     memcpy(password, passw, passw_len);
   }
@@ -404,9 +404,9 @@ void MqttClient::onConnect(void *mqttclient_ptr, TcpClient*)
   msg.add((char)(mqtt->keep_alive >> 8));   // keep_alive
   msg.add((char)(mqtt->keep_alive & 0xFF));
   msg.add(mqtt->clientId);
-  if(mqtt->username != nullptr) {
-    msg.add(mqtt->username, strlen(mqtt->username));
-    msg.add(mqtt->password, strlen(mqtt->password));
+  if(mqtt->user_len != 0 && mqtt->passw_len != 0) {
+    msg.add(mqtt->username, mqtt->user_len);
+    msg.add(mqtt->password, mqtt->passw_len);
   }
   debug("cnx: mqtt connecting");
   msg.sendTo(mqtt);
@@ -442,8 +442,8 @@ void MqttClient::resubscribe()
     MqttMessage msg(MqttMessage::Type::Subscribe, 2);
 
     // TODO manage packet identifier
-    msg.add(0);
-    msg.add(0);
+    msg.add(0x23);
+    msg.add(0xD2);
 
     for(auto topic: subscriptions)
     {
