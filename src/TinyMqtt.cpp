@@ -125,7 +125,7 @@ void MqttClient::connect(MqttBroker* local)
   local_broker->addClient(this);
 }
 
-void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* user, const char* passw)
+void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* user, const char* passw, bool clean, const char* lastWill, const Topic &willTopic)
 {
   debug("MqttClient::connect_to_host " << broker << ':' << port);
   keep_alive = ka;
@@ -140,8 +140,28 @@ void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* 
     memcpy(password, passw, passw_len);
   }
   else {
+    user_len = 0;
+    passw_len = 0;
     delete [] username;
     delete [] password;
+  }
+
+  cleanSession = clean;
+
+  if(lastWill != NULL && willTopic.matches("") == false) {
+    lwt_len = strlen(lastWill);
+    lwt = new char[lwt_len];
+    memcpy(lwt, lastWill, lwt_len);
+
+    lwtTopic_len = strlen(willTopic.c_str());
+    lwtTopic = new char[lwtTopic_len];
+    memcpy(lwtTopic, willTopic.c_str(), lwtTopic_len);
+  }
+  else {
+    lwt_len = 0;
+    delete [] lwt;
+    lwtTopic_len = 0;
+    delete [] lwtTopic;
   }
 
   close();
@@ -396,14 +416,27 @@ void MqttClient::onConnect(void *mqttclient_ptr, TcpClient*)
   msg.add(0x4);  // Mqtt protocol version 3.1.1
 
   uint8_t connect_flag = 0x00;
-  connect_flag = (connect_flag | FlagCleanSession) /*| (connect_flag | FlagUserName)*/;
+  if(mqtt->cleanSession)
+    connect_flag |= FlagCleanSession;
+
   if(mqtt->username != nullptr)
     connect_flag = (connect_flag | FlagUserName) | (connect_flag | FlagPassword);
-  msg.add(connect_flag);  // Connect flags         TODO user / name
+
+  if(mqtt->lwt != nullptr)
+    connect_flag = (connect_flag | FlagWill) | (connect_flag | FlagWillRetain);
+
+  msg.add(connect_flag);  // Connect flags
 
   msg.add((char)(mqtt->keep_alive >> 8));   // keep_alive
   msg.add((char)(mqtt->keep_alive & 0xFF));
+
   msg.add(mqtt->clientId);
+
+  if(mqtt->lwt_len != 0 && mqtt->lwtTopic_len != 0) {
+    msg.add(mqtt->lwtTopic, mqtt->lwtTopic_len);
+    msg.add(mqtt->lwt, mqtt->lwt_len);
+  }
+
   if(mqtt->user_len != 0 && mqtt->passw_len != 0) {
     msg.add(mqtt->username, mqtt->user_len);
     msg.add(mqtt->password, mqtt->passw_len);

@@ -222,9 +222,9 @@ class MqttClient
     ~MqttClient();
 
     void connect(MqttBroker* local_broker);
-    void connect(string broker, uint16_t port = 1883, uint16_t keep_alive = 10, const char* user = NULL, const char* passw = NULL);
-    void connect(const IPAddress& ip, uint16_t port = 1883, uint16_t keep_alive = 10, const char* user = NULL, const char* passw = NULL)
-    { connect(ip.toString().c_str(), port, keep_alive); }
+    void connect(string broker, uint16_t port = 1883, uint16_t ka = 10, const char* user = NULL, const char* passw = NULL, bool clean = true, const char* lastWill = NULL, const Topic &willTopic = "");
+    void connect(const IPAddress& ip, uint16_t port = 1883, uint16_t ka = 10, const char* user = NULL, const char* passw = NULL, bool clean = true, const char* lastWill = NULL, const Topic &willTopic = "")
+    { connect(ip.toString().c_str(), port, ka, user, passw, clean, lastWill, willTopic); }
 
     // TODO it seems that connected returns true in tcp mode even if
     // no negociation occurred
@@ -351,6 +351,11 @@ class MqttClient
     char *password = nullptr;
     size_t user_len = 0;
     size_t passw_len = 0;
+    bool cleanSession;
+    char *lwt = nullptr;
+    char* lwtTopic = nullptr;
+    size_t lwt_len = 0;
+    size_t lwtTopic_len = 0;
 };
 
 class MqttBroker
