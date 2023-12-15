@@ -132,10 +132,12 @@ void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* 
 
   if(user != NULL && passw != NULL) {
     user_len = strlen(user);
+    delete [] username;
     username = new char[user_len];
     memcpy(username, user, user_len);
 
     passw_len = strlen(passw);
+    delete [] password;
     password = new char[passw_len];
     memcpy(password, passw, passw_len);
   }
