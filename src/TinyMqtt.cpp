@@ -152,10 +152,12 @@ void MqttClient::connect(string broker, uint16_t port, uint16_t ka, const char* 
 
   if(lastWill != NULL && willTopic.matches("") == false) {
     lwt_len = strlen(lastWill);
+    delete [] lwt;
     lwt = new char[lwt_len];
     memcpy(lwt, lastWill, lwt_len);
 
     lwtTopic_len = strlen(willTopic.c_str());
+    delete [] lwtTopic;
     lwtTopic = new char[lwtTopic_len];
     memcpy(lwtTopic, willTopic.c_str(), lwtTopic_len);
   }
